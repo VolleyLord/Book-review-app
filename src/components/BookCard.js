@@ -1,6 +1,8 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Text, Image, StyleSheet, Dimensions, TouchableOpacity } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
+import { getFirestore, collection, query, where, getDocs } from 'firebase/firestore';
+import Icon from 'react-native-vector-icons/MaterialIcons';
 
 const { width } = Dimensions.get('window');
 const CARD_WIDTH = width * 0.4;
@@ -8,14 +10,32 @@ const CARD_WIDTH = width * 0.4;
 const BookCard = ({ book }) => {
   const navigation = useNavigation();
   const { volumeInfo } = book;
+  const [averageRating, setAverageRating] = useState(0);
+  const [reviewsCount, setReviewsCount] = useState(0);
+  const db = getFirestore();
 
-  console.log('BookCard - Rendering book:', {
-    id: book.id,
-    title: volumeInfo?.title,
-    authors: volumeInfo?.authors,
-    hasImage: !!volumeInfo?.imageLinks?.thumbnail,
-    key: `${book.id || 'unknown'}-${Math.random()}`
-  });
+  useEffect(() => {
+    const fetchReviews = async () => {
+      try {
+        const q = query(
+          collection(db, 'reviews'),
+          where('bookId', '==', book.id)
+        );
+        const querySnapshot = await getDocs(q);
+        const reviews = querySnapshot.docs.map(doc => doc.data());
+        
+        if (reviews.length > 0) {
+          const sum = reviews.reduce((acc, review) => acc + review.rating, 0);
+          setAverageRating((sum / reviews.length).toFixed(1));
+          setReviewsCount(reviews.length);
+        }
+      } catch (error) {
+        console.error('Error fetching reviews:', error);
+      }
+    };
+
+    fetchReviews();
+  }, [book.id]);
 
   const getImageSource = () => {
     if (volumeInfo?.imageLinks?.thumbnail) {
@@ -25,11 +45,6 @@ const BookCard = ({ book }) => {
   };
 
   const handlePress = () => {
-    console.log('BookCard - Pressed book:', {
-      id: book.id,
-      title: volumeInfo?.title,
-      key: `${book.id || 'unknown'}-${Math.random()}`
-    });
     navigation.navigate('BookDetails', { book });
   };
 
@@ -46,9 +61,12 @@ const BookCard = ({ book }) => {
       <Text style={styles.author} numberOfLines={1}>
         {volumeInfo?.authors?.[0] || 'Unknown Author'}
       </Text>
-      <Text style={styles.rating}>
-        Rating: {volumeInfo?.averageRating || 'N/A'}
-      </Text>
+      <View style={styles.ratingContainer}>
+        <Icon name="star" size={16} color="#FFD700" />
+        <Text style={styles.rating}>
+          {averageRating} ({reviewsCount})
+        </Text>
+      </View>
     </TouchableOpacity>
   );
 };
@@ -84,10 +102,15 @@ const styles = StyleSheet.create({
     color: '#666',
     marginTop: 4,
   },
+  ratingContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 4,
+  },
   rating: {
     fontSize: 12,
     color: '#666',
-    marginTop: 4,
+    marginLeft: 4,
   },
 });
 

@@ -1,12 +1,13 @@
 import React, { useState } from 'react';
-import { Image, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { Image, Text, TouchableOpacity, View } from 'react-native';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import styles from './styles';
 import { auth, db } from '../../firebase/config';
 import { signInWithEmailAndPassword } from 'firebase/auth';
 import { doc, getDoc } from 'firebase/firestore';
-import LoadingModal from '../../utils/LoadingModal';  
+import LoadingModal from '../../utils/LoadingModal';
+import AuthInput from '../../components/AuthInput/AuthInput';
 
 export default function LoginScreen({navigation}) {
     const [email, setEmail] = useState('')
@@ -30,7 +31,7 @@ export default function LoginScreen({navigation}) {
                 return;
             }
             const userData = userDoc.data();
-            await AsyncStorage.setItem('user', JSON.stringify(userData));  // Save user data
+            await AsyncStorage.setItem('user', JSON.stringify(userData));
             navigation.navigate('Home', {user: userData});
         } catch (error) {
             alert(error.message);
@@ -50,24 +51,18 @@ export default function LoginScreen({navigation}) {
                     source={require('../../../assets/icon.png')}
                 />
                 {/* Email input field */}
-                <TextInput
-                    style={styles.input}
+                <AuthInput
                     placeholder='E-mail'
-                    placeholderTextColor="#aaaaaa"
-                    onChangeText={(text) => setEmail(text)}
                     value={email}
-                    underlineColorAndroid="transparent"
+                    onChangeText={setEmail}
                     autoCapitalize="none"
                 />
                 {/* Password input field */}
-                <TextInput
-                    style={styles.input}
-                    placeholderTextColor="#aaaaaa"
-                    secureTextEntry
+                <AuthInput
                     placeholder='Password'
-                    onChangeText={(text) => setPassword(text)}
                     value={password}
-                    underlineColorAndroid="transparent"
+                    onChangeText={setPassword}
+                    secureTextEntry
                     autoCapitalize="none"
                 />
                 {/* Login button */}

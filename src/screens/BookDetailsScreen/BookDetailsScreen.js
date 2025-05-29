@@ -205,9 +205,12 @@ const BookDetailsScreen = ({ route, navigation }) => {
           <Text style={styles.authors}>
             {volumeInfo.authors?.join(', ') || 'Unknown Author'}
           </Text>
-          <Text style={styles.rating}>
-            Rating: {volumeInfo.averageRating || 'N/A'} ({volumeInfo.ratingsCount || 0} ratings)
-          </Text>
+          <View style={styles.ratingContainer}>
+            <Icon name="star" size={20} color="#FFD700" />
+            <Text style={styles.rating}>
+              {getAverageRating()} ({reviews.length} reviews)
+            </Text>
+          </View>
         </View>
       </View>
 
@@ -358,6 +361,10 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: '#666',
     marginBottom: 8,
+  },
+  ratingContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
   },
   rating: {
     fontSize: 14,

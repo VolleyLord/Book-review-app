@@ -1,11 +1,12 @@
 import React, { useState } from 'react';
-import { Image, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { Image, Text, TouchableOpacity, View } from 'react-native';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
 import styles from './styles';
 import { auth, db } from '../../firebase/config';
 import { createUserWithEmailAndPassword } from 'firebase/auth';
 import { doc, setDoc } from 'firebase/firestore';
-import LoadingModal from '../../utils/LoadingModal';  
+import LoadingModal from '../../utils/LoadingModal';
+import AuthInput from '../../components/AuthInput/AuthInput';
 
 export default function RegistrationScreen({navigation}) {
     const [fullName, setFullName] = useState('');
@@ -54,45 +55,33 @@ export default function RegistrationScreen({navigation}) {
                     source={require('../../../assets/icon.png')}
                 />
                 {/* Full name input field */}
-                <TextInput
-                    style={styles.input}
+                <AuthInput
                     placeholder='Full Name'
-                    placeholderTextColor="#aaaaaa"
-                    onChangeText={(text) => setFullName(text)}
                     value={fullName}
-                    underlineColorAndroid="transparent"
+                    onChangeText={setFullName}
                     autoCapitalize="none"
                 />
                 {/* Email input field */}
-                <TextInput
-                    style={styles.input}
+                <AuthInput
                     placeholder='E-mail'
-                    placeholderTextColor="#aaaaaa"
-                    onChangeText={(text) => setEmail(text)}
                     value={email}
-                    underlineColorAndroid="transparent"
+                    onChangeText={setEmail}
                     autoCapitalize="none"
                 />
                 {/* Password input field */}
-                <TextInput
-                    style={styles.input}
-                    placeholderTextColor="#aaaaaa"
-                    secureTextEntry
+                <AuthInput
                     placeholder='Password'
-                    onChangeText={(text) => setPassword(text)}
                     value={password}
-                    underlineColorAndroid="transparent"
+                    onChangeText={setPassword}
+                    secureTextEntry
                     autoCapitalize="none"
                 />
                 {/* Confirm password input field */}
-                <TextInput
-                    style={styles.input}
-                    placeholderTextColor="#aaaaaa"
-                    secureTextEntry
+                <AuthInput
                     placeholder='Confirm Password'
-                    onChangeText={(text) => setConfirmPassword(text)}
                     value={confirmPassword}
-                    underlineColorAndroid="transparent"
+                    onChangeText={setConfirmPassword}
+                    secureTextEntry
                     autoCapitalize="none"
                 />
                 {/* Register button */}
