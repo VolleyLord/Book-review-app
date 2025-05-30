@@ -4,7 +4,7 @@ import { getAuth, onAuthStateChanged } from 'firebase/auth';
 import { getFirestore, doc, getDoc, setDoc } from 'firebase/firestore';
 import { NavigationContainer } from '@react-navigation/native';
 import { createStackNavigator } from '@react-navigation/stack';
-import { LoginScreen, HomeScreen, RegistrationScreen } from './src/screens';
+import { LoginScreen, HomeScreen, RegistrationScreen, ProfileScreen } from './src/screens';
 import BookDetailsScreen from './src/screens/BookDetailsScreen/BookDetailsScreen';
 import SearchResultsScreen from './src/screens/SearchResultsScreen/SearchResultsScreen';
 import LoadScreen from './src/screens/LoadScreen/LoadScreen';
@@ -25,44 +25,17 @@ export default function App() {
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
       if (user) {
         try {
-          console.log('Auth state changed, user:', user.uid);
-          const userDoc = doc(db, 'users', user.uid);
-          console.log('Attempting to fetch user document...');
-          const docSnapshot = await getDoc(userDoc);
-          console.log('Document exists:', docSnapshot.exists());
-          if (docSnapshot.exists()) {
-            const userData = docSnapshot.data();
-            console.log('User data loaded:', userData);
-            setUser(userData);
-          } else {
-            console.log('No user document found, creating one...');
-            // Создаем документ пользователя, если его нет
-            const newUserData = {
-              uid: user.uid,
-              email: user.email,
-              displayName: user.displayName || 'Anonymous',
-              createdAt: new Date().toISOString()
-            };
-            await setDoc(userDoc, newUserData);
-            console.log('New user document created');
-            setUser(newUserData);
+          const userDoc = await getDoc(doc(db, 'users', user.uid));
+          if (userDoc.exists()) {
+            setUser(userDoc.data());
           }
         } catch (error) {
           console.error('Error fetching user data:', error);
-          console.error('Error details:', {
-            code: error.code,
-            message: error.message,
-            stack: error.stack
-          });
-          setUser(null);
-        } finally {
-          setLoading(false);
         }
       } else {
-        console.log('No authenticated user');
         setUser(null);
-        setLoading(false);
       }
+      setLoading(false);
     });
 
     return () => unsubscribe();
@@ -72,8 +45,6 @@ export default function App() {
     return <LoadScreen />;
   }
 
-  console.log('Rendering App with user:', user);
-
   return (
     <NavigationContainer>
       <Stack.Navigator>
@@ -82,7 +53,7 @@ export default function App() {
             <Stack.Screen 
               name="Home" 
               component={HomeScreen}
-              initialParams={{ extraData: user }}
+              initialParams={{ user }}
               options={{ 
                 title: 'Book Reviews',
                 headerTitleStyle: {
@@ -100,6 +71,11 @@ export default function App() {
               name="SearchResults" 
               component={SearchResultsScreen}
               options={({ route }) => ({ title: `Search: ${route.params.query}` })}
+            />
+            <Stack.Screen 
+              name="Profile" 
+              component={ProfileScreen}
+              options={{ title: 'Profile' }}
             />
           </>
         ) : (

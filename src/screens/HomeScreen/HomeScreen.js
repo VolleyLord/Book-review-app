@@ -1,37 +1,23 @@
 import React, { useEffect, useState } from 'react';
-import { View, StyleSheet, ScrollView, ActivityIndicator, TouchableOpacity, Text } from 'react-native';
-import { getAuth, signOut } from 'firebase/auth';
+import { View, StyleSheet, ScrollView, ActivityIndicator } from 'react-native';
 import BookCategory from '../../components/BookCategory';
 import SearchBar from '../../components/SearchBar';
+import Navigation from '../../components/Navigation/Navigation';
 import { fetchBooksByCategory, categories } from '../../utils/googleBooksApi';
 
-const HomeScreen = ({ navigation }) => {
+const HomeScreen = ({ navigation, route }) => {
   const [booksByCategory, setBooksByCategory] = useState({});
   const [loading, setLoading] = useState(true);
   const [pageTokens, setPageTokens] = useState({});
   const [loadingMore, setLoadingMore] = useState({});
   const [searchQuery, setSearchQuery] = useState('');
+  const user = route.params?.user;
 
   useEffect(() => {
     navigation.setOptions({
-      headerRight: () => (
-        <TouchableOpacity
-          onPress={handleLogout}
-          style={styles.logoutButton}
-        >
-          <Text style={styles.logoutText}>Logout</Text>
-        </TouchableOpacity>
-      ),
+      headerRight: () => <Navigation user={user} />,
     });
-  }, [navigation]);
-
-  const handleLogout = async () => {
-    try {
-      await signOut(getAuth());
-    } catch (error) {
-      console.error('Error signing out:', error);
-    }
-  };
+  }, [navigation, user]);
 
   const handleSearch = () => {
     if (searchQuery.trim()) {
@@ -131,14 +117,6 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-  },
-  logoutButton: {
-    marginRight: 15,
-    padding: 8,
-  },
-  logoutText: {
-    color: '#2196F3',
-    fontSize: 16,
   },
 });
 
