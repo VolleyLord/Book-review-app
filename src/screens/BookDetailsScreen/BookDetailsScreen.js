@@ -16,6 +16,7 @@ import { getFirestore, collection, query, where, orderBy, onSnapshot, addDoc, up
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import ReviewCard from '../../components/ReviewCard/ReviewCard';
 import ReviewForm from '../../components/ReviewForm/ReviewForm';
+import { useFocusEffect } from '@react-navigation/native';
 
 const { width } = Dimensions.get('window');
 
@@ -37,6 +38,23 @@ const BookDetailsScreen = ({ route, navigation }) => {
   const [hasUserReview, setHasUserReview] = useState(false);
   const auth = getAuth();
   const db = getFirestore();
+
+  const fetchReviews = async () => {
+    try {
+      const q = query(
+        collection(db, 'reviews'),
+        where('bookId', '==', book.id)
+      );
+      const querySnapshot = await getDocs(q);
+      const reviewsData = querySnapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      }));
+      setReviews(reviewsData);
+    } catch (error) {
+      console.error('Error fetching reviews:', error);
+    }
+  };
 
   useEffect(() => {
     const checkUserReview = async () => {
@@ -80,6 +98,12 @@ const BookDetailsScreen = ({ route, navigation }) => {
 
     return () => unsubscribe();
   }, [book.id]);
+
+  useFocusEffect(
+    React.useCallback(() => {
+      fetchReviews();
+    }, [])
+  );
 
   const getSortedReviews = () => {
     const sorted = [...reviews];

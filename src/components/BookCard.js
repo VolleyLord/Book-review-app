@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, Image, StyleSheet, Dimensions, TouchableOpacity } from 'react-native';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import { getFirestore, collection, query, where, getDocs } from 'firebase/firestore';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 
@@ -14,26 +14,32 @@ const BookCard = ({ book }) => {
   const [reviewsCount, setReviewsCount] = useState(0);
   const db = getFirestore();
 
-  useEffect(() => {
-    const fetchReviews = async () => {
-      try {
-        const q = query(
-          collection(db, 'reviews'),
-          where('bookId', '==', book.id)
-        );
-        const querySnapshot = await getDocs(q);
-        const reviews = querySnapshot.docs.map(doc => doc.data());
-        
-        if (reviews.length > 0) {
-          const sum = reviews.reduce((acc, review) => acc + review.rating, 0);
-          setAverageRating((sum / reviews.length).toFixed(1));
-          setReviewsCount(reviews.length);
-        }
-      } catch (error) {
-        console.error('Error fetching reviews:', error);
+  const fetchReviews = async () => {
+    try {
+      const q = query(
+        collection(db, 'reviews'),
+        where('bookId', '==', book.id)
+      );
+      const querySnapshot = await getDocs(q);
+      const reviews = querySnapshot.docs.map(doc => doc.data());
+      
+      if (reviews.length > 0) {
+        const sum = reviews.reduce((acc, review) => acc + review.rating, 0);
+        setAverageRating((sum / reviews.length).toFixed(1));
+        setReviewsCount(reviews.length);
       }
-    };
+    } catch (error) {
+      console.error('Error fetching reviews:', error);
+    }
+  };
 
+  useFocusEffect(
+    React.useCallback(() => {
+      fetchReviews();
+    }, [])
+  );
+
+  useEffect(() => {
     fetchReviews();
   }, [book.id]);
 
@@ -49,68 +55,69 @@ const BookCard = ({ book }) => {
   };
 
   return (
-    <TouchableOpacity style={styles.card} onPress={handlePress}>
-      <Image
-        source={getImageSource()}
-        style={styles.thumbnail}
-        resizeMode="cover"
-      />
-      <Text style={styles.title} numberOfLines={2}>
-        {volumeInfo?.title || 'Untitled'}
-      </Text>
-      <Text style={styles.author} numberOfLines={1}>
-        {volumeInfo?.authors?.[0] || 'Unknown Author'}
-      </Text>
-      <View style={styles.ratingContainer}>
-        <Icon name="star" size={16} color="#FFD700" />
-        <Text style={styles.rating}>
-          {averageRating} ({reviewsCount})
+    <TouchableOpacity style={styles.container} onPress={handlePress}>
+      <Image source={getImageSource()} style={styles.image} />
+      <View style={styles.info}>
+        <Text style={styles.title} numberOfLines={2}>
+          {volumeInfo?.title || 'Unknown Title'}
         </Text>
+        <Text style={styles.author} numberOfLines={1}>
+          {volumeInfo?.authors?.[0] || 'Unknown Author'}
+        </Text>
+        <View style={styles.ratingContainer}>
+          <Icon name="star" size={16} color="#FFD700" />
+          <Text style={styles.rating}>{averageRating}</Text>
+          <Text style={styles.reviewsCount}>({reviewsCount})</Text>
+        </View>
       </View>
     </TouchableOpacity>
   );
 };
 
 const styles = StyleSheet.create({
-  card: {
+  container: {
     width: CARD_WIDTH,
     margin: 8,
     backgroundColor: 'white',
     borderRadius: 8,
-    padding: 8,
+    overflow: 'hidden',
+    elevation: 3,
     shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
+    shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.25,
     shadowRadius: 3.84,
-    elevation: 5,
   },
-  thumbnail: {
+  image: {
     width: '100%',
     height: CARD_WIDTH * 1.5,
-    borderRadius: 4,
+    resizeMode: 'cover',
+  },
+  info: {
+    padding: 8,
   },
   title: {
     fontSize: 14,
     fontWeight: 'bold',
-    marginTop: 8,
+    marginBottom: 4,
   },
   author: {
     fontSize: 12,
     color: '#666',
-    marginTop: 4,
+    marginBottom: 4,
   },
   ratingContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginTop: 4,
   },
   rating: {
+    marginLeft: 4,
+    fontSize: 12,
+    fontWeight: 'bold',
+  },
+  reviewsCount: {
+    marginLeft: 4,
     fontSize: 12,
     color: '#666',
-    marginLeft: 4,
   },
 });
 
