@@ -3,6 +3,9 @@ import { View, Text, Image, TouchableOpacity, StyleSheet, ScrollView, Alert, Mod
 import { auth, db } from '../../firebase/config';
 import { doc, getDoc, setDoc } from 'firebase/firestore';
 import LoadingModal from '../../utils/LoadingModal';
+import { getUserFavorites } from '../../services/favoritesService';
+import BookCard from '../../components/BookCard';
+import { Ionicons } from '@expo/vector-icons';
 
 const AVATARS = [
     { id: 'lion', source: require('../../../assets/lion.png') },
@@ -31,9 +34,13 @@ const ProfileScreen = () => {
     const [isLoading, setIsLoading] = useState(false);
     const [selectedAvatar, setSelectedAvatar] = useState(null);
     const [isAvatarModalVisible, setIsAvatarModalVisible] = useState(false);
+    const [favorites, setFavorites] = useState([]);
+    const [loadingFavorites, setLoadingFavorites] = useState(true);
+    const [isFavoritesExpanded, setIsFavoritesExpanded] = useState(false);
 
     useEffect(() => {
         fetchUserData();
+        loadFavorites();
     }, []);
 
     const showToast = (message) => {
@@ -82,6 +89,24 @@ const ProfileScreen = () => {
         }
     };
 
+    const loadFavorites = async () => {
+        try {
+            if (auth.currentUser) {
+                const userFavorites = await getUserFavorites(auth.currentUser.uid);
+                setFavorites(userFavorites);
+            }
+        } catch (error) {
+            console.error('Error loading favorites:', error);
+            showToast('Failed to load favorites');
+        } finally {
+            setLoadingFavorites(false);
+        }
+    };
+
+    const toggleFavorites = () => {
+        setIsFavoritesExpanded(!isFavoritesExpanded);
+    };
+
     const renderAvatarItem = ({ item }) => (
         <TouchableOpacity
             style={styles.avatarItem}
@@ -89,6 +114,13 @@ const ProfileScreen = () => {
         >
             <Image source={item.source} style={styles.avatarOption} />
         </TouchableOpacity>
+    );
+
+    const renderFavoriteItem = ({ item }) => (
+        <BookCard
+            book={item}
+            style={styles.bookCard}
+        />
     );
 
     if (!user) return null;
@@ -115,10 +147,43 @@ const ProfileScreen = () => {
                 <Text style={styles.email}>{user.email}</Text>
             </View>
 
-            <View style={styles.favoritesSection}>
-                <Text style={styles.sectionTitle}>Favorites</Text>
-                {/* Здесь будет список избранных книг */}
-            </View>
+            <TouchableOpacity 
+                style={styles.favoritesSection} 
+                onPress={toggleFavorites}
+                activeOpacity={0.7}
+            >
+                <View style={styles.favoritesHeader}>
+                    <Text style={styles.sectionTitle}>Избранное</Text>
+                    <View style={styles.favoritesCount}>
+                        <Text style={styles.countText}>{favorites.length}</Text>
+                    </View>
+                    <Ionicons 
+                        name={isFavoritesExpanded ? "chevron-up" : "chevron-down"} 
+                        size={24} 
+                        color="#666"
+                        style={styles.expandIcon}
+                    />
+                </View>
+                
+                {isFavoritesExpanded && (
+                    <View style={styles.favoritesContent}>
+                        {loadingFavorites ? (
+                            <Text style={styles.loadingText}>Загрузка...</Text>
+                        ) : favorites.length > 0 ? (
+                            <FlatList
+                                data={favorites}
+                                renderItem={renderFavoriteItem}
+                                keyExtractor={(item) => item.id}
+                                numColumns={2}
+                                scrollEnabled={false}
+                                contentContainerStyle={styles.favoritesList}
+                            />
+                        ) : (
+                            <Text style={styles.emptyText}>У вас пока нет избранных книг</Text>
+                        )}
+                    </View>
+                )}
+            </TouchableOpacity>
 
             <Modal
                 visible={isAvatarModalVisible}
@@ -190,12 +255,61 @@ const styles = StyleSheet.create({
         color: '#666',
     },
     favoritesSection: {
-        padding: 20,
+        margin: 16,
+        backgroundColor: '#fff',
+        borderRadius: 12,
+        borderWidth: 1,
+        borderColor: '#e0e0e0',
+        overflow: 'hidden',
+    },
+    favoritesHeader: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        padding: 16,
+        borderBottomWidth: 1,
+        borderBottomColor: '#e0e0e0',
     },
     sectionTitle: {
-        fontSize: 20,
+        fontSize: 18,
         fontWeight: 'bold',
-        marginBottom: 15,
+        flex: 1,
+    },
+    favoritesCount: {
+        backgroundColor: '#007AFF',
+        borderRadius: 12,
+        paddingHorizontal: 8,
+        paddingVertical: 4,
+        marginRight: 8,
+    },
+    countText: {
+        color: '#fff',
+        fontSize: 14,
+        fontWeight: 'bold',
+    },
+    expandIcon: {
+        marginLeft: 8,
+    },
+    favoritesContent: {
+        padding: 8,
+    },
+    favoritesList: {
+        padding: 8,
+    },
+    bookCard: {
+        width: '48%',
+        margin: '1%',
+    },
+    loadingText: {
+        textAlign: 'center',
+        padding: 20,
+        fontSize: 16,
+        color: '#666',
+    },
+    emptyText: {
+        textAlign: 'center',
+        padding: 20,
+        fontSize: 16,
+        color: '#666',
     },
     modalContainer: {
         flex: 1,

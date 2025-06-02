@@ -50,9 +50,9 @@ export default function App() {
       <Stack.Navigator>
         {user ? (
           <>
-            <Stack.Screen 
-              name="Home" 
-              component={HomeScreen}
+          <Stack.Screen 
+            name="Home" 
+            component={HomeScreen}
               initialParams={{ user }}
               options={{ 
                 title: 'Book Reviews',
