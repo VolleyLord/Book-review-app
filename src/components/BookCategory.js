@@ -1,13 +1,37 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, ScrollView } from 'react-native';
 import BookCard from './BookCard';
 import { useNavigation } from '@react-navigation/native';
-import { auth } from '../firebase/config';
+import { auth, db } from '../firebase/config';
+import { doc, onSnapshot } from 'firebase/firestore';
 
-const BookCategory = ({ title, books, onEndReached }) => {
+const BookCategory = ({ title, books, onEndReached, hasMore }) => {
   const navigation = useNavigation();
+  const [favoriteBooks, setFavoriteBooks] = useState([]);
+
+  useEffect(() => {
+    if (!auth.currentUser) return;
+
+    const unsubscribe = onSnapshot(
+      doc(db, 'users', auth.currentUser.uid),
+      (doc) => {
+        if (doc.exists() && doc.data().favoriteBooks) {
+          setFavoriteBooks(doc.data().favoriteBooks);
+        } else {
+          setFavoriteBooks([]);
+        }
+      },
+      (error) => {
+        console.error('Error listening to favorite books:', error);
+      }
+    );
+
+    return () => unsubscribe();
+  }, []);
 
   const handleScroll = (event) => {
+    if (!hasMore) return;
+    
     const { layoutMeasurement, contentOffset, contentSize } = event.nativeEvent;
     const paddingToRight = 50;
     const isCloseToRight = layoutMeasurement.width + contentOffset.x >= contentSize.width - paddingToRight;
@@ -18,7 +42,6 @@ const BookCategory = ({ title, books, onEndReached }) => {
   };
 
   const getUniqueKey = (book, index) => {
-    // Используем комбинацию id книги и индекса для гарантии уникальности
     return `${book.id || 'unknown'}-${index}`;
   };
 
@@ -27,7 +50,6 @@ const BookCategory = ({ title, books, onEndReached }) => {
   };
 
   const handleFavoritePress = (book) => {
-    // Здесь будет логика добавления/удаления из избранного
     console.log('Favorite pressed for book:', book.id);
   };
 
@@ -47,12 +69,12 @@ const BookCategory = ({ title, books, onEndReached }) => {
             key={getUniqueKey(book, index)} 
             book={{
               ...book,
-              userId: auth.currentUser?.uid, // Добавляем userId текущего пользователя
+              userId: auth.currentUser?.uid,
               username: auth.currentUser?.displayName || 'Anonymous'
             }}
             onPress={() => handleBookPress(book)}
             onFavoritePress={() => handleFavoritePress(book)}
-            isFavorite={false} // Здесь нужно будет добавить проверку избранного
+            isFavorite={favoriteBooks.some(favBook => favBook.id === book.id)}
           />
         ))}
       </ScrollView>

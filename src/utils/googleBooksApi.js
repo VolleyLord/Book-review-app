@@ -28,12 +28,42 @@ export const fetchBooksByCategory = async (category, pageToken = null) => {
 };
 
 export const categories = [
-  'fiction',
-  'science',
-  'fairytales',
-  'adventure',
-  'fantasy',
-  'mystery',
-  'biography',
-  'history'
+    'Fiction',
+    'Science',
+    'Fairytales',
+    'Adventure',
+    'Fantasy',
+    'Mystery',
+    'Biography',
+    'History',
+    'Romance',
+    'Thriller',
+    'Horror',
+    'Science Fiction',
+    'Poetry',
+    'Drama',
+    'Self-Help',
+    'Cookbooks',
+    'Travel',
+    "Children's Literature",
+    'Young Adult',
+    'Art',
+    'Philosophy',
+    'Psychology',
+    'Business',
+    'Technology',
+    'Health and Fitness',
+    'Memoir',
+    'Crime',
+    'Politics',
+    'Education',
+    'Religion and Spirituality',
+    'Humor',
+    'Graphic Novels',
+    'Environmental',
+    'Cultural Studies'
 ]; 
+
+
+
+
